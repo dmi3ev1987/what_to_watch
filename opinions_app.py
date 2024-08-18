@@ -3,7 +3,7 @@ from datetime import datetime
 # Импортируется функция для выбора случайного значения:
 from random import randrange
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -41,8 +41,17 @@ def index_view():
     # Иначе выбирается случайное число в диапазоне от 0 до quantity...
     offset_value = randrange(quantity)
     # ...и определяется случайный объект:
+    # Извлекаем все записи, пропуская первые offset_value записей,
+    # и берём первую запись из получившегося набора:
     opinion = Opinion.query.offset(offset_value).first()
-    return opinion.text
+    # Тут подключаем шаблон opinion.html:
+    return render_template('opinion.html', opinion=opinion)
+
+
+@app.route('/add')
+def add_opinion_view():
+    # Тут подключаем шаблон add_opinion.html:
+    return render_template('add_opinion.html')
 
 
 if __name__ == "__main__":
