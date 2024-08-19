@@ -45,13 +45,25 @@ def index_view():
     # и берём первую запись из получившегося набора:
     opinion = Opinion.query.offset(offset_value).first()
     # Тут подключаем шаблон opinion.html:
-    return render_template('opinion.html', opinion=opinion)
+    return render_template("opinion.html", opinion=opinion)
 
 
-@app.route('/add')
+@app.route("/add")
 def add_opinion_view():
     # Тут подключаем шаблон add_opinion.html:
-    return render_template('add_opinion.html')
+    return render_template("add_opinion.html")
+
+
+# Тут указывается конвертер пути для id:
+@app.route("/opinions/<int:id>")
+# Параметром указывается имя переменной:
+def opinion_view(id):
+    # Теперь можно запросить нужный объект по id...
+    # opinion = Opinion.query.get(id)
+    # Метод get() заменён на get_or_404():
+    opinion = Opinion.query.get_or_404(id)
+    # ...и передать его в шаблон (шаблон тот же, что и для главной страницы):
+    return render_template("opinion.html", opinion=opinion)
 
 
 if __name__ == "__main__":
