@@ -40,3 +40,10 @@ pip install -r requirements.txt
 ```
 flask run
 ```
+
+
+# .env
+FLASK_APP=opinions_app
+FLASK_DEBUG=1
+DATABASE_URI=sqlite:///db.sqlite3
+SECRET_KEY=YOUR_SECRET_KEY
