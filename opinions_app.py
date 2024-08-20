@@ -4,6 +4,7 @@ from datetime import datetime
 from random import randrange
 
 from flask import Flask, abort, flash, redirect, render_template, url_for
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, URLField
@@ -12,12 +13,13 @@ from wtforms.validators import DataRequired, Length, Optional
 app = Flask(__name__)
 
 # Подключаем БД SQLite:
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 # Вместо MY SECRET KEY придумайте и впишите свой ключ:
-app.config["SECRET_KEY"] = "LOL_KEY"
+app.config['SECRET_KEY'] = 'LOL_KEY'
 # Создаётся экземпляр класса SQLAlchemy и передаётся
 # в качестве параметра экземпляр приложения Flask:
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class Opinion(db.Model):
@@ -33,23 +35,25 @@ class Opinion(db.Model):
     # Дата и время — текущее время,
     # по этому столбцу база данных будет проиндексирована:
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    # Новое поле.
+    added_by = db.Column(db.String(64))
 
 
 # Класс формы опишите сразу после модели Opinion.
 class OpinionForm(FlaskForm):
     title = StringField(
-        "Введите название фильма",
-        validators=[DataRequired(message="Обязательное поле"), Length(1, 128)],
+        'Введите название фильма',
+        validators=[DataRequired(message='Обязательное поле'), Length(1, 128)],
     )
     text = TextAreaField(
-        "Напишите мнение",
-        validators=[DataRequired(message="Обязательное поле")],
+        'Напишите мнение',
+        validators=[DataRequired(message='Обязательное поле')],
     )
     source = URLField(
-        "Добавьте ссылку на подробный обзор фильма",
+        'Добавьте ссылку на подробный обзор фильма',
         validators=[Length(1, 256), Optional()],
     )
-    submit = SubmitField("Добавить")
+    submit = SubmitField('Добавить')
 
 
 # Тут декорируется обработчик и указывается код нужной ошибки:
@@ -64,7 +68,7 @@ def internal_error(error):
     # сгенерированная на основе шаблона 500.html.
     # Этого шаблона пока нет, но сейчас мы его тоже создадим.
     # Пользователь получит и код HTTP-ответа 500.
-    return render_template("500.html"), 500
+    return render_template('500.html'), 500
 
 
 @app.errorhandler(404)
@@ -74,7 +78,7 @@ def page_not_found(error):
     return render_template('404.html'), 404
 
 
-@app.route("/")
+@app.route('/')
 def index_view():
     # Определяется количество мнений в базе данных:
     quantity = Opinion.query.count()
@@ -92,10 +96,10 @@ def index_view():
     # и берём первую запись из получившегося набора:
     opinion = Opinion.query.offset(offset_value).first()
     # Тут подключаем шаблон opinion.html:
-    return render_template("opinion.html", opinion=opinion)
+    return render_template('opinion.html', opinion=opinion)
 
 
-@app.route("/add", methods=["GET", "POST"])
+@app.route('/add', methods=['GET', 'POST'])
 def add_opinion_view():
     # Вот тут создаётся новый экземпляр формы:
     form = OpinionForm()
@@ -105,9 +109,9 @@ def add_opinion_view():
         # Если в БД уже есть мнение с текстом, который ввёл пользователь...
         if Opinion.query.filter_by(text=text).first() is not None:
             # ...вызвать функцию flash и передать соответствующее сообщение:
-            flash("Такое мнение уже было оставлено ранее!")
+            flash('Такое мнение уже было оставлено ранее!')
             # Вернуть пользователя на страницу «Добавить новое мнение»:
-            return render_template("add_opinion.html", form=form)
+            return render_template('add_opinion.html', form=form)
         # ...то нужно создать новый экземпляр класса Opinion:
         opinion = Opinion(
             # И передать в него данные, полученные из формы:
@@ -120,14 +124,14 @@ def add_opinion_view():
         # И зафиксировать изменения:
         db.session.commit()
         # Затем переадресовать пользователя на страницу добавленного мнения:
-        return redirect(url_for("opinion_view", id=opinion.id))
+        return redirect(url_for('opinion_view', id=opinion.id))
     # Объект формы передаётся в шаблон add_opinion.html:
     # Если валидация не пройдена — просто отрисовать страницу с формой:
-    return render_template("add_opinion.html", form=form)
+    return render_template('add_opinion.html', form=form)
 
 
 # Тут указывается конвертер пути для id:
-@app.route("/opinions/<int:id>")
+@app.route('/opinions/<int:id>')
 # Параметром указывается имя переменной:
 def opinion_view(id):
     # Теперь можно запросить нужный объект по id...
@@ -135,8 +139,8 @@ def opinion_view(id):
     # Метод get() заменён на get_or_404():
     opinion = Opinion.query.get_or_404(id)
     # ...и передать его в шаблон (шаблон тот же, что и для главной страницы):
-    return render_template("opinion.html", opinion=opinion)
+    return render_template('opinion.html', opinion=opinion)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run()
